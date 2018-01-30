@@ -1,0 +1,76 @@
+AllCops:
+  TargetRubyVersion: 2.3
+
+Layout/SpaceInsideHashLiteralBraces:
+  Enabled: false
+
+Layout/EmptyLinesAroundBlockBody:
+  Enabled: false
+
+Layout/EmptyLinesAroundModuleBody:
+  Enabled: false
+
+Layout/EmptyLinesAroundClassBody:
+  Enabled: false
+
+Layout/MultilineOperationIndentation:
+  Enabled: false
+
+Metrics/LineLength:
+  Max: 120
+
+Metrics/BlockLength:
+  Max: 150
+
+Metrics/AbcSize:
+  Enabled: false
+
+Metrics/ClassLength:
+  Enabled: false
+
+Metrics/MethodLength:
+  Enabled: false
+
+Metrics/ModuleLength:
+  Enabled: false
+
+Rails/TimeZone:
+  Enabled: false
+
+Style/MethodMissing:
+  Enabled: false
+
+# Not all modules have to have top level comments
+Style/Documentation:
+  Enabled: false
+
+Style/GuardClause:
+  Enabled: false
+
+# Allow the use of !! (conversion of nil/object to true/false)
+Style/DoubleNegation:
+  Enabled: false
+
+# Allow unless/if blocks even for one-liners
+Style/IfUnlessModifier:
+  Enabled: false
+
+# Generally a good idea, but "and return" looks nicer than " && return"
+Style/AndOr:
+  Enabled: false
+
+# Allow fail() for initial exception, raise() for re-raise
+# It seems that the cop decision was mainly based on "more people use raise than fail"...
+Style/SignalException:
+  Enabled: false
+
+# Allow assigning multiple variables in one line.
+# This should not be overused, but comes in handy when assigning initializer values to instance variables
+Style/ParallelAssignment:
+  Enabled: false
+
+Metrics/ParameterLists:
+  CountKeywordArgs: false
+
+Rails/Output:
+  Enabled: false
