@@ -16,7 +16,7 @@ module ChainOptions
       #
       # Prints warnings for incompatible options which were used as arguments in `chain_option`
       #
-      def handle_warnings(name, incremental: false, invalid: :raise, filter: nil, transform: nil, **_)
+      def handle_warnings(name, incremental: false, invalid: :raise, filter: nil, transform: nil, **)
         if incremental
           warn_incompatible_options(name, 'invalid: :default', 'incremental: true') if invalid.to_s == 'default'
           warn_incompatible_options(name, 'incremental: true', 'filter:') if filter
@@ -93,6 +93,7 @@ module ChainOptions
     def instance_method_hash(options)
       ChainOptions::Util.slice(options, Option::METHOD_SYMBOLS).each_with_object({}) do |(meth, value), h|
         next h[meth] = value if value.respond_to?(:call)
+
         h[meth] = instance.public_method(value)
       end
     end

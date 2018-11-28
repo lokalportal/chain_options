@@ -1,63 +1,95 @@
 AllCops:
   TargetRubyVersion: 2.3
+  Exclude:
+    - tmp/**/*
 
+#---------------------------------------------
+#                   Layout
+#---------------------------------------------
+
+# Hashes do not need padding
 Layout/SpaceInsideHashLiteralBraces:
   Enabled: false
 
-Layout/EmptyLinesAroundBlockBody:
+# Allow 2 space indentation for when inside a case
+Layout/CaseIndentation:
   Enabled: false
 
-Layout/EmptyLinesAroundModuleBody:
-  Enabled: false
-
+# Allow empty lines in classes
 Layout/EmptyLinesAroundClassBody:
   Enabled: false
 
+# Allow multiple spaces before first argument
+Layout/SpaceBeforeFirstArg:
+  Enabled: false
+
+# Allow extra spacing, e.g. to align components
+Layout/ExtraSpacing:
+  Enabled: false
+
+# Usually good, but in some cases not possible
+Layout/AlignHash:
+  Enabled: false
+
+# Allow an empty line after do / before end
+Layout/EmptyLinesAroundBlockBody:
+  Enabled: false
+
+# Again, generally a good idea, but it has problems with multiline operations in
+# combination with assignments
 Layout/MultilineOperationIndentation:
+  Enabled: false
+
+# See the corresponding other cops
+Layout/EmptyLinesAroundModuleBody:
+  Enabled: false
+
+Layout/SpaceInLambdaLiteral:
+  Enabled: false
+
+#---------------------------------------------
+#                   Metrics
+#---------------------------------------------
+
+# Allow bigger classes
+Metrics/ClassLength:
   Enabled: false
 
 Metrics/LineLength:
   Max: 120
 
+  # To make it possible to copy or click on URIs in the code, we allow lines
+  # containing a URI to be longer than Max.
+  AllowHeredoc: true
+  AllowURI: true
+
 Metrics/BlockLength:
-  Max: 150
+  Max: 75
+  Exclude:
+    - spec/**/*.rb
 
-Metrics/AbcSize:
-  Enabled: false
-
-Metrics/ClassLength:
-  Enabled: false
-
+# Allow longer methods
 Metrics/MethodLength:
   Enabled: false
 
+# Allow bigger modules
 Metrics/ModuleLength:
   Enabled: false
 
-Rails/TimeZone:
+Metrics/ParameterLists:
+  Exclude:
+    - lib/chain_options/option_set.rb
+
+#---------------------------------------------
+#                   Naming
+#---------------------------------------------
+
+Naming/HeredocDelimiterNaming:
   Enabled: false
 
-Style/MethodMissing:
-  Enabled: false
-
-# Not all modules have to have top level comments
-Style/Documentation:
-  Enabled: false
-
-Style/GuardClause:
-  Enabled: false
-
-# Allow the use of !! (conversion of nil/object to true/false)
-Style/DoubleNegation:
-  Enabled: false
-
-# Allow unless/if blocks even for one-liners
-Style/IfUnlessModifier:
-  Enabled: false
-
-# Generally a good idea, but "and return" looks nicer than " && return"
-Style/AndOr:
-  Enabled: false
+#---------------------------------------------
+#                   Style
+#---------------------------------------------
 
 # Allow fail() for initial exception, raise() for re-raise
 # It seems that the cop decision was mainly based on "more people use raise than fail"...
@@ -69,8 +101,37 @@ Style/SignalException:
 Style/ParallelAssignment:
   Enabled: false
 
-Metrics/ParameterLists:
-  CountKeywordArgs: false
-
-Rails/Output:
+# Depending on the situation, it might make more sense to use
+# [:symbol1, :symbol2] over %i[symbol1 symbol2], e.g. for multiline aligning reasons.
+Style/SymbolArray:
   Enabled: false
+
+# Not all modules have to have top level comments
+Style/Documentation:
+  Enabled: false
+
+# Allow class variable usage
+Style/ClassVars:
+  Enabled: false
+
+# Allow block comments
+Style/BlockComments:
+  Enabled: false
+
+# Allow the use of !! (conversion of nil/object to true/false)
+Style/DoubleNegation:
+  Enabled: false
+
+# Allow unless/if blocks even for one-liners
+Style/IfUnlessModifier:
+  Enabled: false
+
+Style/GuardClause:
+  Enabled: false
+
+Style/AccessModifierDeclarations:
+  Enabled: false
+
+Style/MethodMissingSuper:
+  Exclude:
+    - lib/chain_options/util.rb

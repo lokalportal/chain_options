@@ -55,6 +55,7 @@ module ChainOptions
     #
     def current_value
       return custom_value if dirty?
+
       default_value
     end
 
@@ -64,6 +65,7 @@ module ChainOptions
     #
     def initial_value(value)
       raise ArgumentError, "The initial_value was already set to #{custom_value.inspect}." if dirty?
+
       self.custom_value = value
     end
 
@@ -73,6 +75,7 @@ module ChainOptions
     def to_h
       PARAMETERS.each_with_object({}) do |param, hash|
         next if send(param).nil?
+
         hash[param] = send(param)
       end
     end
@@ -98,6 +101,7 @@ module ChainOptions
     #
     def value_from_args(args, &block)
       return block if ChainOptions::Util.blank?(args) && block && allow_block
+
       flat_value(args)
     end
 
@@ -106,6 +110,7 @@ module ChainOptions
     #
     def flat_value(args)
       return args.first if args.is_a?(Enumerable) && args.count == 1
+
       args
     end
 
@@ -138,6 +143,7 @@ module ChainOptions
     #
     def value_valid?(value)
       return true unless validate
+
       validate.call(value)
     end
 
@@ -153,6 +159,7 @@ module ChainOptions
     #
     def transformed_value(value)
       return value unless transform
+
       transformed = Array(value).map(&transform)
       value.is_a?(Enumerable) ? transformed : transformed.first
     end
@@ -171,6 +178,7 @@ module ChainOptions
     #
     def filter_value(value)
       return value unless filter
+
       Array(value).select(&filter)
     end
 
@@ -180,6 +188,7 @@ module ChainOptions
     #
     def default_value
       return default unless default.respond_to?(:call)
+
       default.call
     end
   end
