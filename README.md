@@ -1,4 +1,6 @@
 [![Build Status](https://travis-ci.org/lokalportal/chain_options.svg?branch=master)](https://travis-ci.org/lokalportal/chain_options)
+[![Maintainability](https://api.codeclimate.com/v1/badges/aa9c3e9eb2a02095c587/maintainability)](https://codeclimate.com/github/lokalportal/chain_options/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/aa9c3e9eb2a02095c587/test_coverage)](https://codeclimate.com/github/lokalportal/chain_options/test_coverage)
 
 # ChainOptions
 
