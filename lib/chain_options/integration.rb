@@ -15,7 +15,7 @@ module ChainOptions
       # @param [String, Symbol] name
       #
       # @param [Hash] options
-      # @option options [Object] :default (nil)
+      # @option options [Object, Proc] :default (nil)
       #   Sets the value which should be used whenever no custom value was set for this option
       #
       # @option options [Symbol] :invalid (:raise)
@@ -23,13 +23,24 @@ module ChainOptions
       #   If set to `:raise`, an ArgumentError is raised if an option validation fails,
       #   if set to `:default`, the default value is used instead of the invalid value
       #
-      # @option options [Proc, Symbol, NilClass] :filter (nil)
+      # @option options [Proc] :validate (nil)
+      #   Sets up a validation proc for the option value.
+      #   See :invalid for information about what happens when a validation fails
+      #
+      # @option options [Proc, Symbol] :filter (nil)
       #   An optional filter method to reject certain values.
       #   See ChainOptions::OptionSet#filter_value for more information
       #
-      # @option options [Proc, Symbol, NilClass] :transform (nil)
+      # @option options [Proc, Symbol] :transform (nil)
       #   An optional transformation that transforms the given value.
       #   See ChainOptions::OptionSet#transform_value for more information.
+      #
+      # @option options [Boolean] :incremental (false)
+      #   If set to +true+, overriding an option value will no longer be possible.
+      #   Instead, the whole option value is treated as an Array with each new value simply being
+      #   appended to it.
+      #     user.favourite_books('Momo', 'Neverending Story').favourite_books('Lord of the Rings', 'The Hobbit')
+      #     => [["Momo", "Neverending Story"], ["Lord of the Rings", "The Hobbit"]]
       #
       # @option options [Boolean] :allow_block (false)
       #   Sets whether the option value may be a proc object given through a block.
