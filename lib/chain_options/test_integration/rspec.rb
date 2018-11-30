@@ -24,6 +24,11 @@ require 'rspec/expectations'
 # specify the actual value you expect to be set:
 #   it { is_expected.to have_chain_option(:my_option).which_takes(42).and_sets("42").as_value }
 #
+# ## Default Value
+#
+# To test whether the option has a certain default value, continue the matcher as follows:
+#   it { is_expected.to have_chain_option(:my_option).with_the_default_value(21) }
+#
 module ChainOptions
   module TestIntegration
     module Rspec
@@ -36,6 +41,10 @@ module ChainOptions
                         "to define the chain option `:#{option_name}`,",
                         "but it didn't."
             next false
+          end
+
+          if instance_variable_defined?('@expected_default_value')
+            next false unless correct_default_value?(instance)
           end
 
           if instance_variable_defined?('@given_value')
@@ -57,6 +66,16 @@ module ChainOptions
 
         define_method :chain_option? do |instance|
           instance.class.available_chain_options.key?(option_name.to_sym)
+        end
+
+        define_method :correct_default_value? do |instance|
+          actual_default_value = instance.send(option_name)
+          if actual_default_value != @expected_default_value
+            error_lines "Expected the chain option `:#{option_name}`",
+                        "of the class `#{instance.class}`",
+                        "to have the default value `#{@expected_default_value.inspect}`",
+                        "but the actual default value is `#{actual_default_value.inspect}`"
+          end
         end
 
         define_method :check_for_exception do |instance|
@@ -92,6 +111,10 @@ module ChainOptions
                         "of the class `#{instance.class}`,",
                         "but it didn't."
           end
+        end
+
+        chain :with_the_default_value do |expected_default_value|
+          @expected_default_value = expected_default_value
         end
 
         chain :which_takes do |value|

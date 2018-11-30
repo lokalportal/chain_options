@@ -275,6 +275,14 @@ specify the actual value you expect to be set:
 it { is_expected.to have_chain_option(:my_option).which_takes(42).and_sets("42").as_value }
 ```
 
+### Default Value
+
+To test whether the option has a certain default value, continue the matcher as follows:
+
+```ruby
+it { is_expected.to have_chain_option(:my_option).with_the_default_value(21) }
+```
+
 ### Basic Testing
 
 If you can't or don't want to use the custom matchers, you could define your own helper

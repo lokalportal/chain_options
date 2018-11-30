@@ -67,6 +67,7 @@ Metrics/BlockLength:
   Max: 75
   Exclude:
     - spec/**/*.rb
+    - lib/chain_options/test_integration/rspec.rb
 
 # Allow longer methods
 Metrics/MethodLength:
