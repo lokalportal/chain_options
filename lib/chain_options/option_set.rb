@@ -16,7 +16,7 @@ module ChainOptions
       #
       # Prints warnings for incompatible options which were used as arguments in `chain_option`
       #
-      def handle_warnings(name, incremental: false, invalid: :raise, filter: nil, transform: nil, **_)
+      def handle_warnings(name, incremental: false, invalid: :raise, filter: nil, transform: nil, **)
         if incremental
           warn_incompatible_options(name, 'invalid: :default', 'incremental: true') if invalid.to_s == 'default'
           warn_incompatible_options(name, 'incremental: true', 'filter:') if filter
@@ -75,9 +75,31 @@ module ChainOptions
       option(name).new_value(*args, &block)
     end
 
+    #
+    # Handles a call of #option_name.
+    # Determines whether the call was meant to be a setter or a getter and
+    # acts accordingly.
+    #
+    def handle_option_call(option_name, *args, &block)
+      if getter?(option_name, *args, &block)
+        current_value(option_name)
+      else
+        new_value = new_value(option_name, *args, &block)
+        instance.class.new(@values.merge(option_name.to_sym => new_value))
+      end
+    end
+
     private
 
     attr_reader :values, :chain_options
+
+    #
+    # @return [Boolean] +true+ if a call to the corresponding option method with the given args / block
+    #   can be handled as a getter (no args / no block usage)
+    #
+    def getter?(option_name, *args, &block)
+      args.empty? && (block.nil? || !option(option_name).allow_block)
+    end
 
     # no-doc
     def raise_no_option_error(name)
@@ -93,6 +115,7 @@ module ChainOptions
     def instance_method_hash(options)
       ChainOptions::Util.slice(options, Option::METHOD_SYMBOLS).each_with_object({}) do |(meth, value), h|
         next h[meth] = value if value.respond_to?(:call)
+
         h[meth] = instance.public_method(value)
       end
     end
