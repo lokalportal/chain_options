@@ -227,6 +227,73 @@ end
 my_object.my_proc #=> <#Proc...>
 ```
 
+## Option Testing
+
+ChainOptions comes with basic RSpec integration by providing custom matchers.
+
+To use them, simply require the corresponding module and include it in your specs:
+
+```ruby
+require 'chain_options/test_integration/rspec'
+
+subject { MyClass.new }
+
+describe 'my_option' do
+    include ChainOptions::TestIntegration::Rspec
+    
+    it { is_expected.to have_chain_option(:my_option) }
+end
+```
+
+Every matcher call starts with `have_chain_option` which ensures the the given
+object actually has access to a chain option with the given name.
+
+### Value Acceptance
+
+To test for values which should raise an exception when being set as a chain option value,
+continue the matcher as follows:
+
+```ruby
+it { is_expected.to have_chain_option(:my_option).which_takes(42).and_raises_an_exception } 
+```
+
+This matcher can only fail if the option is set to `invalid: :raise`.
+
+### Value Filters / Transformations
+
+To test whether the option is actually set to the correct value after passing an object to it,
+continue the matcher as follows:
+
+```ruby
+it { is_expected.to have_chain_option(:my_option).which_takes(42).and_sets_it_as_value }
+```
+
+If you expect the option to perform a filtering and/or transformation, you can also
+specify the actual value you expect to be set:
+
+```ruby
+it { is_expected.to have_chain_option(:my_option).which_takes(42).and_sets("42").as_value }
+```
+
+### Basic Testing
+
+If you can't or don't want to use the custom matchers, you could define your own helper
+methods to keep your option tests readable:
+
+```ruby
+def expect_to_eql(name, value, expected)
+  expect(subject.send(name, value).send(name)).to eql expected
+end
+
+def expect_to_raise(name, value)
+  expect { subject.send(name, value) }.to raise_error(ArgumentError, /not valid/),
+                                          "`#{value.inspect}` should not be a valid value for option `#{name}`"
+end
+
+it { expect_to_eql :my_option, 42, '42' }
+it { expect_to_raise :my_option, Object.new }
+```
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/lokalportal/chain_options.  
