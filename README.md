@@ -1,8 +1,40 @@
+[![Build Status](https://travis-ci.org/lokalportal/chain_options.svg?branch=master)](https://travis-ci.org/lokalportal/chain_options)
+[![Maintainability](https://api.codeclimate.com/v1/badges/aa9c3e9eb2a02095c587/maintainability)](https://codeclimate.com/github/lokalportal/chain_options/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/aa9c3e9eb2a02095c587/test_coverage)](https://codeclimate.com/github/lokalportal/chain_options/test_coverage)
+
 # ChainOptions
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/chain_options`. To experiment with that code, run `bin/console` for an interactive prompt.
+ChainOptions is a small gem which allows you to add non-destructive chainable options to
+your classes. It is useful to incrementally build instances without overriding the previous
+one and provides an easy-to-understand DSL to set options either through 
+method-chaining or in a block.
 
-TODO: Delete this and the text above, and describe your gem
+An example:
+
+```ruby
+class MyItemFeed
+  include ChainOptions::Integration
+  
+  chain_option :page, 
+               default: 1, 
+               invalid: :default, 
+               validate: ->(value) { value.to_i.positive? }
+  
+  chain_option :per_page,
+               default:  30,
+               validate: ->(value) { value.to_i.positive? },
+               invalid:  :default
+end
+
+feed = MyItemFeed.new.build_options do
+  set :page, params[:page]
+  set :per_page, params[:per_page]
+end
+
+# or
+
+feed = MyItemFeed.new.page(params[:page]).per_page(params[:per_page])
+```
 
 ## Installation
 
@@ -22,17 +54,261 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+To use ChainOptions in one of your classes, simply include its integration module:
 
-## Development
+```ruby
+include ChainOptions::Integration
+```
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+Afterwards, you're ready to define the options available to instances of your class.
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+### Basic Options
+
+The easiest way to define an option is to call `chain_option` with just the option name:
+
+```ruby
+class MyClass
+  chain_option :my_option
+end
+```
+
+This will generate the method `#my_option` which is accessible by instances of your class.
+When it's called with an argument, it will return a new instance of your class with 
+the option set to this value, when being called without an argument, it will return the current value.
+
+```ruby
+my_class = MyClass.new #=> Instance 1 of MyClass
+my_class.my_option('my value') #=> Instance 2 of MyClass
+my_class.my_option #=> 'my value'
+``` 
+
+Please note that instance variables are currently not carried over to the new
+instances built when setting a new option.  
+This decision was made to ensure no cached values could be used any more
+after changing an option value:
+
+```ruby
+class Feed
+  chain_option :page
+  chain_option :per_page
+  
+  def entries
+    @entries ||= MyModel.page(page).per(per_page)
+  end
+end
+```
+
+Setting `page` to a different value after `#entries` was called once would not  
+lead to another page being loaded, the return value would stay the same.
+
+This behaviour might be changed in the future, but would only make the gem more complex
+for now.
+
+Array may be passed in as multiple arguments or an Array object, so the following calls are equivalent:
+
+```ruby
+my_object.my_value(1, 2, 3)
+my_option.my_value([1, 2, 3])
+```
+
+### Advanced Options
+
+#### Filters
+
+It is possible to apply filters to option values. As soon as a filter Proc is defined,
+it is assumed that the option value will be an Array.
+
+```ruby
+chain_option :my_even_numbers,
+             filter: -> (number) { number.even? }
+             
+my_object.my_even_numbers(1, 2, 3, 4, 5) #=> [2, 4]
+```
+
+**Note**: As soon as `:filter` is defined, the value will be treated as Array, even if only a single
+element is passed in:
+
+```ruby
+my_object.my_even_numbers(2) #=> [2]
+```
+
+#### Value Validations
+
+It is possible to define validations on the setting value. These are executed whenever a new
+value is set and will either cause an Exception or the option going back to the default value:
+
+```ruby
+chain_option :per_page,
+             validate: -> (value) { value.to_i.positive? },
+             invalid: :raise
+```
+
+The above example ensures that a value set for the `per_page` option has to be positive.
+Otherwise, an `ArgumentError` is raised.
+
+```ruby
+chain_option :per_page,
+             default: 1
+             validate: -> (value) { value.to_i.positive? },
+             invalid: :default
+             
+my_object.per_page(-1).per_page #=> 1 
+```
+
+**Note**: If filters are set up as well, your validation proc will always receive an Array, never a single element.
+
+#### Value Transformations
+
+It is possible to perform automatic transformations (or type casts) on an option value, 
+pretty similar to what ActiveRecord does when e.g. a numeric value is assigned to a string attribute.
+
+As options don't have a type, you have to define the transformation yourself: 
+
+```ruby
+chain_option :my_strings,
+             transform: -> (element) { element.to_s }
+             
+chain_option :my_strings,
+             transform: :to_s
+```
+
+The above calls are equivalent. If a symbol is given, the value (resp. each element of it in case of
+an Array) is expected to respond to a method with the same name.
+
+If the value is an array, the `transform` Proc will receive each item individually.
+
+#### Default Values
+
+It is possible to specify a default value for each option using the `:default` keyword argument.
+The default value is returned in the following cases:
+
+* No custom value was set for the option yet
+* The value set for the option is invalid and the option is set to use the default value instead (see below)
+
+The default value may either be a Proc which is executed on demand or any kind of Ruby object.
+
+```ruby
+chain_option :per_page,
+             default: -> { SomeStore.get_default_per_page }
+```
+
+#### Incremental Values
+
+Options can be set to increment their value through multiple setter calls:
+
+```ruby
+chain_option :favourite_books, incremental: true
+
+user.favourite_books('Lord of the Rings').favourite_books('The Hobbit')
+#=> [['Lord of the Rings'], ['The Hobbit]]
+```
+
+As the values should still be separateable, the elements which were added in each
+setter call are wrapped in another array instead of just appending them to the collection.
+Otherwise, it wouldn't be possible to determine that the following value was caused by two sets:
+
+```ruby
+user.favourite_books('Momo', 'Neverending Story').favourite_books('Lord of the Rings', 'The Hobbit')
+#=> [["Momo", "Neverending Story"], ["Lord of the Rings", "The Hobbit"]]
+```
+
+#### Blocks as option values
+
+If your option accepts blocks as values, setting this to `true` allows you to use the block syntax
+to set a new option value instead of having to pass in a lambda function or Proc object:
+
+```ruby
+chain_option :my_proc, allow_block: true
+
+my_object = my_object.my_proc do
+  # ...
+end
+
+my_object.my_proc #=> <#Proc...>
+```
+
+## Option Testing
+
+ChainOptions comes with basic RSpec integration by providing custom matchers.
+
+To use them, simply require the corresponding module and include it in your specs:
+
+```ruby
+require 'chain_options/test_integration/rspec'
+
+subject { MyClass.new }
+
+describe 'my_option' do
+    include ChainOptions::TestIntegration::Rspec
+    
+    it { is_expected.to have_chain_option(:my_option) }
+end
+```
+
+Every matcher call starts with `have_chain_option` which ensures the the given
+object actually has access to a chain option with the given name.
+
+### Value Acceptance
+
+To test for values which should raise an exception when being set as a chain option value,
+continue the matcher as follows:
+
+```ruby
+it { is_expected.to have_chain_option(:my_option).which_takes(42).and_raises_an_exception } 
+```
+
+This matcher can only fail if the option is set to `invalid: :raise`.
+
+### Value Filters / Transformations
+
+To test whether the option is actually set to the correct value after passing an object to it,
+continue the matcher as follows:
+
+```ruby
+it { is_expected.to have_chain_option(:my_option).which_takes(42).and_sets_it_as_value }
+```
+
+If you expect the option to perform a filtering and/or transformation, you can also
+specify the actual value you expect to be set:
+
+```ruby
+it { is_expected.to have_chain_option(:my_option).which_takes(42).and_sets("42").as_value }
+```
+
+### Default Value
+
+To test whether the option has a certain default value, continue the matcher as follows:
+
+```ruby
+it { is_expected.to have_chain_option(:my_option).with_the_default_value(21) }
+```
+
+### Basic Testing
+
+If you can't or don't want to use the custom matchers, you could define your own helper
+methods to keep your option tests readable:
+
+```ruby
+def expect_to_eql(name, value, expected)
+  expect(subject.send(name, value).send(name)).to eql expected
+end
+
+def expect_to_raise(name, value)
+  expect { subject.send(name, value) }.to raise_error(ArgumentError, /not valid/),
+                                          "`#{value.inspect}` should not be a valid value for option `#{name}`"
+end
+
+it { expect_to_eql :my_option, 42, '42' }
+it { expect_to_raise :my_option, Object.new }
+```
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/chain_options. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
+Bug reports and pull requests are welcome on GitHub at https://github.com/lokalportal/chain_options.  
+For pull request, please follow [git-flow](https://danielkummer.github.io/git-flow-cheatsheet/) naming conventions.  
+ 
+This project is intended to be a safe, welcoming space for collaboration, 
+and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
 
 ## License
 
