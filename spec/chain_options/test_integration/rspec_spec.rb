@@ -12,6 +12,7 @@ describe ChainOptions::TestIntegration::Rspec do
       include ChainOptions::Integration
 
       chain_option :duck, default: 'waddle waddle', transform: :to_s
+      chain_option :superduck, validate: -> (value) { value == 'fly' }, invalid: :raise
     end
   end
 
@@ -35,6 +36,28 @@ describe ChainOptions::TestIntegration::Rspec do
     end
 
     describe '.which_takes' do
+      describe '.and_raises_an_exception' do
+        let(:matcher_call) do
+          -> { is_expected.to have_chain_option(:superduck).which_takes(given_value).and_raises_an_exception }
+        end
+
+        context 'if the option raises an exception on an invalid value' do
+          let(:given_value) { 'walk' }
+
+          it { passes(&matcher_call) }
+        end
+
+        context 'if the option does not raise an exception on an invalid value' do
+          let(:given_value) { 'fly' }
+
+          it { fails(/not to accept the value/, &matcher_call) }
+        end
+
+        context 'if a different exception is raised' do
+
+        end
+      end
+
       describe '.and_sets_it_as_value' do
         let(:matcher_call) do
           -> { is_expected.to have_chain_option(:duck).which_takes(given_value).and_sets_it_as_value }

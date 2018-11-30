@@ -85,31 +85,18 @@ module ChainOptions
                         "not to accept the value `#{@given_value.inspect}`,",
                         'but it did.'
           rescue ArgumentError => e
-            unless e.message.include?('not valid')
-              error_lines "Expected the chain option `:#{option_name}`",
-                          "of the class `#{instance.class}`",
-                          "to raise a corresponding Exception when given the value `#{@given_value.inspect}`",
-                          "but instead `#{e}` was raised."
-            end
+            raise unless e.message.include?('not valid')
           end
         end
 
         define_method :check_for_expected_value do |instance|
-          begin
-            actual_value = instance.send(option_name, @given_value).send(option_name)
-            if actual_value != @expected_value
-              error_lines "Expected the chain option `:#{option_name}`",
-                          "of the class `#{instance.class}`",
-                          "to accept the value `#{@given_value.inspect}`",
-                          "and set the option value to `#{@expected_value.inspect}`,",
-                          "but it was set to `#{actual_value.inspect}`"
-            end
-          rescue ArgumentError => e
-            raise unless e.message.include?('not valid')
-
+          actual_value = instance.send(option_name, @given_value).send(option_name)
+          if actual_value != @expected_value
             error_lines "Expected the chain option `:#{option_name}`",
-                        "of the class `#{instance.class}`,",
-                        "but it didn't."
+                        "of the class `#{instance.class}`",
+                        "to accept the value `#{@given_value.inspect}`",
+                        "and set the option value to `#{@expected_value.inspect}`,",
+                        "but it was set to `#{actual_value.inspect}`"
           end
         end
 
