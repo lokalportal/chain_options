@@ -53,12 +53,7 @@ module ChainOptions
         ChainOptions::OptionSet.handle_warnings(name, **options)
 
         define_method(name) do |*args, &block|
-          if args.empty? && (block.nil? || !chain_option_set.option(name).allow_block)
-            chain_option_set.current_value(name)
-          else
-            new_value = chain_option_set.new_value(name, *args, &block)
-            self.class.new(chain_option_values(name.to_sym => new_value))
-          end
+          chain_option_set.handle_option_call(name, *args, &block)
         end
       end
 
@@ -94,13 +89,8 @@ module ChainOptions
     #
     # @return [Hash] the currently set options for the current instance.
     #
-    # @param [Hash] additional
-    #   If given, the hash is merged with the existing option values for the result.
-    #   This argument may be used to easily generate a new chain option hash with an additional
-    #   value the next host instance can be initialized with.
-    #
-    def chain_option_values(**additional)
-      (@chain_option_values ||= {}).merge(additional)
+    def chain_option_values
+      @chain_option_values ||= {}
     end
   end
 end

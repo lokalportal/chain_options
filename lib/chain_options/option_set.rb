@@ -75,9 +75,31 @@ module ChainOptions
       option(name).new_value(*args, &block)
     end
 
+    #
+    # Handles a call of #option_name.
+    # Determines whether the call was meant to be a setter or a getter and
+    # acts accordingly.
+    #
+    def handle_option_call(option_name, *args, &block)
+      if getter?(option_name, *args, &block)
+        current_value(option_name)
+      else
+        new_value = new_value(option_name, *args, &block)
+        instance.class.new(@values.merge(option_name.to_sym => new_value))
+      end
+    end
+
     private
 
     attr_reader :values, :chain_options
+
+    #
+    # @return [Boolean] +true+ if a call to the corresponding option method with the given args / block
+    #   can be handled as a getter (no args / no block usage)
+    #
+    def getter?(option_name, *args, &block)
+      args.empty? && (block.nil? || !option(option_name).allow_block)
+    end
 
     # no-doc
     def raise_no_option_error(name)
