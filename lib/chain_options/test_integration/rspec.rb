@@ -70,12 +70,12 @@ module ChainOptions
 
         define_method :correct_default_value? do |instance|
           actual_default_value = instance.send(option_name)
-          if actual_default_value != @expected_default_value
-            error_lines "Expected the chain option `:#{option_name}`",
-                        "of the class `#{instance.class}`",
-                        "to have the default value `#{@expected_default_value.inspect}`",
-                        "but the actual default value is `#{actual_default_value.inspect}`"
-          end
+          next true if actual_default_value == @expected_default_value
+
+          error_lines "Expected the chain option `:#{option_name}`",
+                      "of the class `#{instance.class}`",
+                      "to have the default value `#{@expected_default_value.inspect}`",
+                      "but the actual default value is `#{actual_default_value.inspect}`"
         end
 
         define_method :check_for_exception do |instance|
@@ -136,7 +136,7 @@ module ChainOptions
         chain(:as_value) {}
 
         failure_message do
-          @error
+          @error.to_s
         end
       end
     end
